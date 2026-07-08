@@ -1,0 +1,325 @@
+<!--
+  Saad & Arwa — Invitation Admin  (private tool for the couple)
+  Personalize an invitation per guest and send it by WhatsApp or Email.
+  Everything runs in the browser; the guest list is saved on this device.
+
+  ⚙ Settings live in the ADMIN object near the top of the <script> block:
+     - passcode: change it to your own
+     - message templates (English / Arabic)
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invitation Admin — Saad &amp; Arwa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Pinyon+Script&family=Jost:wght@300;400;500&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --ivory:#FBF6EF;--paper:#FCF9F4;--cream:#F5ECE0;--blush-soft:#F7E7E1;
+  --rose:#C98A82;--rose-deep:#A9635C;--bordeaux:#432A28;--mauve:#6E4B47;--sage-deep:#5E6B50;
+  --gold-1:#9C6B22;--gold-3:#C4922E;--gline:rgba(196,146,46,.4);
+  --serif:"Cormorant Garamond",Georgia,serif;--script:"Pinyon Script",cursive;--sans:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --shadow:0 20px 55px -30px rgba(67,42,40,.5);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:var(--serif);background:radial-gradient(120% 60% at 50% 0%,var(--blush-soft),transparent 55%),var(--ivory);color:var(--bordeaux);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+h1,h2,h3{margin:0}
+a{color:var(--rose-deep)}
+.wrap{max-width:920px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem)}
+.script{font-family:var(--script)}
+.eyebrow{font-family:var(--sans);letter-spacing:.34em;text-transform:uppercase;font-size:.64rem;color:var(--rose-deep)}
+.muted{color:var(--mauve)}
+.card{background:var(--paper);border:1px solid var(--gline);border-radius:10px;box-shadow:var(--shadow);padding:clamp(1.4rem,3.5vw,2.2rem);margin-bottom:1.6rem;position:relative}
+.card::after{content:"";position:absolute;inset:7px;border:1px solid rgba(196,146,46,.16);border-radius:7px;pointer-events:none}
+.card>*{position:relative}
+
+/* header */
+.top{text-align:center;margin-bottom:1.8rem}
+.top .crest{font-family:var(--script);font-size:2.4rem;color:var(--gold-3);line-height:1}
+.top h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.6rem,4vw,2.2rem);margin:.2rem 0}
+.divider{display:flex;align-items:center;justify-content:center;gap:.7rem;color:var(--gold-3);margin:.5rem 0 0}
+.divider::before,.divider::after{content:"";height:1px;width:60px;background:linear-gradient(90deg,transparent,currentColor)}
+.divider::after{background:linear-gradient(90deg,currentColor,transparent)}
+
+/* forms */
+label{display:block;font-family:var(--sans);letter-spacing:.12em;text-transform:uppercase;font-size:.62rem;color:var(--mauve);margin:0 0 .4rem}
+input,select,textarea{width:100%;font-family:var(--serif);font-size:1.02rem;color:var(--bordeaux);padding:.7rem .9rem;background:var(--ivory);border:1px solid rgba(158,110,92,.35);border-radius:6px;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rose-deep);box-shadow:0 0 0 3px rgba(201,138,130,.18)}
+textarea{resize:vertical;min-height:76px;line-height:1.55}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.field{margin-bottom:1rem}
+@media(max-width:620px){.row{grid-template-columns:1fr}}
+
+/* buttons */
+.btn{font-family:var(--sans);letter-spacing:.08em;font-size:.8rem;padding:.7rem 1.15rem;border-radius:100px;border:1px solid var(--rose-deep);color:var(--rose-deep);background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;text-decoration:none;transition:transform .2s,box-shadow .2s,background .2s,color .2s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn svg{width:15px;height:15px}
+.btn--wa{border-color:#25a366;color:#fff;background:#25a366}
+.btn--mail{border-color:var(--rose-deep);color:#fff;background:linear-gradient(135deg,var(--rose),var(--rose-deep))}
+.btn--gold{border-color:var(--gold-3);color:var(--gold-1)}
+.btn--ghost{border-color:rgba(158,110,92,.4);color:var(--mauve)}
+.btn--sm{padding:.4rem .7rem;font-size:.72rem}
+.btnrow{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.4rem}
+
+/* generated link */
+.linkbox{display:flex;gap:.5rem;align-items:stretch;margin:.2rem 0 .2rem}
+.linkbox input{font-family:var(--sans);font-size:.82rem;color:var(--mauve);background:var(--cream)}
+.hint{font-size:.82rem;font-style:italic;color:var(--mauve);margin:.5rem 0 0}
+
+/* list */
+.summary{font-family:var(--sans);font-size:.82rem;letter-spacing:.05em;color:var(--mauve);margin-bottom:.9rem}
+.summary b{color:var(--sage-deep)}
+.glist{display:flex;flex-direction:column;gap:.6rem}
+.gitem{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .7rem;padding:.8rem .9rem;border:1px solid var(--gline);border-radius:8px;background:var(--ivory)}
+.gitem .gname{font-weight:600;font-size:1.12rem;flex:1;min-width:130px}
+.gitem .gmeta{font-family:var(--sans);font-size:.72rem;color:var(--mauve);letter-spacing:.03em}
+.pill{font-family:var(--sans);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .6rem;border-radius:100px}
+.pill--pending{background:#f3e3d0;color:#9a6a2a}
+.pill--sent{background:#e2ecd9;color:var(--sage-deep)}
+.gacts{display:flex;gap:.4rem;flex-wrap:wrap}
+.iconbtn{width:34px;height:34px;padding:0;border-radius:8px;border:1px solid var(--gline);background:var(--paper);color:var(--mauve);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,border-color .2s}
+.iconbtn:hover{border-color:var(--rose-deep);color:var(--rose-deep)}
+.iconbtn.wa:hover{border-color:#25a366;color:#25a366}
+.iconbtn svg{width:16px;height:16px}
+.empty{text-align:center;color:var(--mauve);font-style:italic;padding:1.4rem}
+
+/* lock screen */
+#lock{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 20%,var(--blush-soft),var(--cream) 60%,#EADFCF)}
+#lock .box{width:min(90vw,360px);text-align:center;background:var(--paper);border:1px solid var(--gline);border-radius:12px;padding:2.4rem 2rem;box-shadow:var(--shadow)}
+#lock .crest{font-family:var(--script);font-size:2.6rem;color:var(--gold-3);line-height:1}
+#lock h2{font-family:var(--serif);font-weight:600;margin:.3rem 0 1.4rem}
+#lock .err{color:var(--rose-deep);font-size:.85rem;min-height:1.2em;margin-top:.6rem}
+.hidden{display:none!important}
+.toast{position:fixed;left:50%;bottom:1.4rem;transform:translateX(-50%) translateY(20px);background:var(--bordeaux);color:var(--blush-soft);font-family:var(--sans);font-size:.82rem;letter-spacing:.03em;padding:.7rem 1.2rem;border-radius:100px;box-shadow:var(--shadow);opacity:0;transition:opacity .3s,transform .3s;z-index:60;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+details{margin-top:.4rem}
+summary{cursor:pointer;font-family:var(--sans);font-size:.78rem;letter-spacing:.06em;color:var(--rose-deep)}
+</style>
+
+<!-- LOCK SCREEN -->
+<div id="lock">
+  <div class="box">
+    <div class="crest">S &amp; A</div>
+    <h2>Invitation Admin</h2>
+    <form id="lockForm">
+      <label for="pass">Enter passcode</label>
+      <input id="pass" type="password" autocomplete="off" autofocus />
+      <div class="btnrow" style="justify-content:center;margin-top:1rem"><button class="btn btn--mail" type="submit">Unlock</button></div>
+      <p class="err" id="lockErr"></p>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap hidden" id="app">
+  <div class="top">
+    <div class="crest">S &amp; A</div>
+    <h1>Invitation Admin</h1>
+    <p class="eyebrow">Saad &amp; Arwa · 12 July 2026</p>
+    <div class="divider"></div>
+  </div>
+
+  <!-- CREATE -->
+  <section class="card">
+    <h3 style="font-family:var(--serif);font-weight:600;font-size:1.35rem;margin-bottom:1rem">Create an invitation</h3>
+    <div class="field">
+      <label for="gName">Guest name</label>
+      <input id="gName" type="text" placeholder="e.g. Ahmed Ali / أحمد علي" />
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="gPhone">WhatsApp number <span style="text-transform:none;letter-spacing:0">(with country code, optional)</span></label>
+        <input id="gPhone" type="tel" inputmode="tel" placeholder="e.g. 201001234567" />
+      </div>
+      <div class="field">
+        <label for="gEmail">Email <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input id="gEmail" type="email" inputmode="email" placeholder="guest@email.com" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="gLang">Invitation language</label>
+        <select id="gLang"><option value="en">English</option><option value="ar">العربية (Arabic)</option></select>
+      </div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button class="btn btn--gold" id="addBtn" style="width:100%;justify-content:center">＋ Save to guest list</button>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:.4rem">
+      <label>Personal invitation link</label>
+      <div class="linkbox">
+        <input id="genLink" type="text" readonly />
+        <button class="btn btn--ghost btn--sm" id="copyBtn" title="Copy link">Copy</button>
+      </div>
+    </div>
+
+    <div class="btnrow">
+      <a class="btn btn--wa" id="waBtn" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.5A10 10 0 1012 2zm0 18a8 8 0 01-4.2-1.2l-.3-.2-2.9.9.9-2.8-.2-.3A8 8 0 1112 20zm4.6-5.9c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.5 6.5 0 01-1.9-1.2 7.2 7.2 0 01-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3A2.9 2.9 0 006 8.8a5 5 0 001 2.7 11.4 11.4 0 004.4 3.9c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+        Send on WhatsApp</a>
+      <a class="btn btn--mail" id="mailBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        Send by Email</a>
+      <a class="btn btn--ghost" id="previewBtn" target="_blank" rel="noopener">Preview</a>
+    </div>
+    <p class="hint" id="createHint"></p>
+  </section>
+
+  <!-- LIST -->
+  <section class="card">
+    <h3 style="font-family:var(--serif);font-weight:600;font-size:1.35rem;margin-bottom:.4rem">Guest list</h3>
+    <p class="summary" id="summary"></p>
+    <div class="glist" id="glist"></div>
+    <details>
+      <summary>Export / Import list (to share or back up)</summary>
+      <p class="hint">Copy this text to back up or share with Saad &amp; Arwa. Paste text here and press Import to load a list.</p>
+      <textarea id="ioBox" spellcheck="false" style="font-family:var(--sans);font-size:.78rem"></textarea>
+      <div class="btnrow">
+        <button class="btn btn--ghost btn--sm" id="exportBtn">Copy export</button>
+        <button class="btn btn--ghost btn--sm" id="importBtn">Import from box</button>
+        <button class="btn btn--ghost btn--sm" id="clearBtn" style="margin-inline-start:auto;border-color:#c98a82;color:#a9635c">Clear all</button>
+      </div>
+    </details>
+  </section>
+
+  <p class="muted" style="text-align:center;font-size:.82rem;font-style:italic">The guest list is saved on this device only. Use Export to move it to another phone or computer.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+ *   ⚙  ADMIN SETTINGS — edit these
+ * ========================================================= */
+const ADMIN = {
+  passcode: "saadarwa2026",          // ← change this to your own passcode
+  couple: "Saad & Arwa",
+  // Message sent with the link. {name} and {link} are filled in automatically.
+  message: {
+    en: "Dear {name} 💛\nSaad & Arwa warmly invite you to celebrate their wedding on Sunday, 12 July 2026 at Azure Hall.\nHere is your personal invitation:\n{link}",
+    ar: "عزيزنا {name} 💛\nيتشرّف سعد وأروى بدعوتكم لحضور حفل زفافهما يوم الأحد ١٢ يوليو ٢٠٢٦ في قاعة أزور.\nإليكم دعوتكم الخاصة:\n{link}"
+  },
+  emailSubject: { en: "Saad & Arwa — You're Invited 💛", ar: "دعوة زفاف سعد وأروى 💛" },
+  // The invitation page. Auto-detected as index.html next to this file; override if needed.
+  inviteUrl: new URL("index.html", location.href).href.split("?")[0],
+};
+
+/* =========================================================
+ *   LOCK
+ * ========================================================= */
+const lock=document.getElementById('lock'), app=document.getElementById('app');
+function unlock(){lock.classList.add('hidden');app.classList.remove('hidden');sessionStorage.setItem('sa_admin','1');render();updateGen();}
+if(sessionStorage.getItem('sa_admin')==='1') unlock();
+document.getElementById('lockForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(document.getElementById('pass').value===ADMIN.passcode) unlock();
+  else{document.getElementById('lockErr').textContent="Incorrect passcode.";document.getElementById('pass').select();}
+});
+
+/* =========================================================
+ *   HELPERS
+ * ========================================================= */
+const $=id=>document.getElementById(id);
+const KEY='sa_admin_guests';
+let guests=[];
+try{guests=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){guests=[];}
+function save(){localStorage.setItem(KEY,JSON.stringify(guests));}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function digits(s){return (s||'').replace(/[^0-9]/g,'');}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+
+function linkFor(name,lang){return ADMIN.inviteUrl+'?to='+encodeURIComponent(name)+(lang==='ar'?'&lang=ar':'');}
+function msgFor(name,lang){const tpl=ADMIN.message[lang]||ADMIN.message.en;return tpl.replace('{name}',name).replace('{link}',linkFor(name,lang));}
+function waHref(phone,name,lang){const n=digits(phone);const text=encodeURIComponent(msgFor(name,lang));return 'https://wa.me/'+(n?n:'')+'?text='+text;}
+function mailHref(email,name,lang){const s=encodeURIComponent(ADMIN.emailSubject[lang]||ADMIN.emailSubject.en);const b=encodeURIComponent(msgFor(name,lang));return 'mailto:'+(email||'')+'?subject='+s+'&body='+b;}
+
+/* =========================================================
+ *   CREATE PANEL (live)
+ * ========================================================= */
+function currentInput(){return{name:$('gName').value.trim(),phone:$('gPhone').value.trim(),email:$('gEmail').value.trim(),lang:$('gLang').value};}
+function updateGen(){
+  const g=currentInput();
+  const nm=g.name||'—';
+  $('genLink').value=g.name?linkFor(g.name,g.lang):'';
+  const wa=$('waBtn'),ml=$('mailBtn'),pv=$('previewBtn'),cp=$('copyBtn');
+  const has=!!g.name;
+  [wa,ml,pv,cp].forEach(b=>b.classList.toggle('hidden',false));
+  wa.href=has?waHref(g.phone,g.name,g.lang):'#';
+  ml.href=has?mailHref(g.email,g.name,g.lang):'#';
+  pv.href=has?linkFor(g.name,g.lang):'#';
+  [wa,ml,pv].forEach(b=>{if(!has){b.style.pointerEvents='none';b.style.opacity=.4;}else{b.style.pointerEvents='';b.style.opacity='';}});
+  const hints=[];
+  if(has&&!g.phone) hints.push("No number → WhatsApp will let you pick the contact.");
+  if(has&&!g.email) hints.push("No email → add one to enable email.");
+  $('createHint').textContent=has?hints.join(' '):"Type a guest name to generate their personal link.";
+  if(has&&!g.email) ml.classList.add('hidden'); else ml.classList.remove('hidden');
+}
+['gName','gPhone','gEmail','gLang'].forEach(id=>$(id).addEventListener('input',updateGen));
+
+$('copyBtn').addEventListener('click',async()=>{const v=$('genLink').value;if(!v)return;try{await navigator.clipboard.writeText(v);toast('Link copied');}catch(e){$('genLink').select();document.execCommand('copy');toast('Link copied');}});
+
+$('addBtn').addEventListener('click',()=>{
+  const g=currentInput();
+  if(!g.name){toast('Enter a guest name first');$('gName').focus();return;}
+  guests.unshift({id:Date.now()+''+Math.floor(1000*Math.random()),name:g.name,phone:g.phone,email:g.email,lang:g.lang,sent:false});
+  save();render();
+  $('gName').value='';$('gPhone').value='';$('gEmail').value='';updateGen();
+  toast('Added to guest list');
+});
+
+/* =========================================================
+ *   LIST
+ * ========================================================= */
+const ICON={
+  wa:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.2L2 22l4.9-1.5A10 10 0 1012 2zm0 18a8 8 0 01-4.2-1.2l-.3-.2-2.9.9.9-2.8-.2-.3A8 8 0 1112 20z"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>'
+};
+function render(){
+  const list=$('glist');const sent=guests.filter(g=>g.sent).length;
+  $('summary').innerHTML=guests.length?('<b>'+sent+'</b> of '+guests.length+' invitations sent'):'';
+  if(!guests.length){list.innerHTML='<p class="empty">No guests yet. Create one above and press “Save to guest list”.</p>';$('ioBox').value='';return;}
+  list.innerHTML='';
+  guests.forEach(g=>{
+    const el=document.createElement('div');el.className='gitem';
+    const contact=[g.phone?('📱 '+esc(g.phone)):'',g.email?('✉ '+esc(g.email)):''].filter(Boolean).join('&nbsp;&nbsp;')||'<span class="muted">no contact</span>';
+    el.innerHTML=
+      '<span class="gname">'+esc(g.name)+' <span class="pill '+(g.sent?'pill--sent':'pill--pending')+'">'+(g.sent?'Sent':'Pending')+'</span></span>'+
+      '<span class="gmeta">'+contact+' &nbsp;·&nbsp; '+(g.lang==='ar'?'AR':'EN')+'</span>'+
+      '<span class="gacts">'+
+        '<a class="iconbtn wa" title="WhatsApp" target="_blank" rel="noopener" href="'+waHref(g.phone,g.name,g.lang)+'" data-sent="'+g.id+'">'+ICON.wa+'</a>'+
+        '<a class="iconbtn" title="Email" href="'+mailHref(g.email,g.name,g.lang)+'" data-sent="'+g.id+'">'+ICON.mail+'</a>'+
+        '<button class="iconbtn" title="Copy link" data-copy="'+g.id+'">'+ICON.copy+'</button>'+
+        '<button class="iconbtn" title="Mark sent / pending" data-toggle="'+g.id+'">'+ICON.check+'</button>'+
+        '<button class="iconbtn" title="Delete" data-del="'+g.id+'">'+ICON.trash+'</button>'+
+      '</span>';
+    list.appendChild(el);
+  });
+  $('ioBox').value=JSON.stringify(guests,null,0);
+}
+$('glist').addEventListener('click',e=>{
+  const a=e.target.closest('[data-copy],[data-toggle],[data-del],[data-sent]');if(!a)return;
+  const gid=a.getAttribute('data-copy')||a.getAttribute('data-toggle')||a.getAttribute('data-del')||a.getAttribute('data-sent');
+  const g=guests.find(x=>x.id===gid);if(!g)return;
+  if(a.hasAttribute('data-copy')){const l=linkFor(g.name,g.lang);navigator.clipboard?.writeText(l).then(()=>toast('Link copied'),()=>toast('Copy failed'));e.preventDefault();return;}
+  if(a.hasAttribute('data-toggle')){g.sent=!g.sent;save();render();return;}
+  if(a.hasAttribute('data-del')){if(confirm('Remove '+g.name+' from the list?')){guests=guests.filter(x=>x.id!==gid);save();render();}return;}
+  if(a.hasAttribute('data-sent')){g.sent=true;save();setTimeout(render,50);/* let the link open */}
+});
+
+/* export / import / clear */
+$('exportBtn').addEventListener('click',async()=>{const v=JSON.stringify(guests);try{await navigator.clipboard.writeText(v);toast('Guest list copied');}catch(e){$('ioBox').select();document.execCommand('copy');toast('Guest list copied');}});
+$('importBtn').addEventListener('click',()=>{
+  try{const arr=JSON.parse($('ioBox').value.trim());if(!Array.isArray(arr))throw 0;
+    guests=arr.map(g=>({id:g.id||Date.now()+''+Math.floor(1000*Math.random()),name:String(g.name||'').slice(0,60),phone:String(g.phone||''),email:String(g.email||''),lang:g.lang==='ar'?'ar':'en',sent:!!g.sent})).filter(g=>g.name);
+    save();render();toast('Imported '+guests.length+' guests');
+  }catch(e){toast('Could not read that text');}
+});
+$('clearBtn').addEventListener('click',()=>{if(confirm('Delete the ENTIRE guest list on this device?')){guests=[];save();render();}});
+
+updateGen();
+</script>

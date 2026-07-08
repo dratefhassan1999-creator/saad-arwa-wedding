@@ -95,7 +95,8 @@ html[lang=ar] .fnames{font-size:clamp(2.2rem,8vw,3.6rem);line-height:1.15}
 #intro.is-open{opacity:0;visibility:hidden;pointer-events:none}
 .intro-inner{text-align:center;padding:2rem;transition:transform 1s var(--ease)}
 #intro.is-open .intro-inner{transform:translateY(-14px)}
-.intro-kicker{font-family:var(--sans);letter-spacing:.4em;text-transform:uppercase;font-size:.7rem;color:var(--mauve);margin-bottom:2.2rem}
+.intro-kicker{font-family:var(--sans);letter-spacing:.4em;text-transform:uppercase;font-size:.7rem;color:var(--mauve);margin-bottom:1rem}
+.intro-to{font-family:var(--script);color:var(--gold-3);font-size:clamp(1.7rem,7vw,2.6rem);line-height:1;margin:0 0 1.8rem}
 .envelope{--w:min(78vw,340px);width:var(--w);height:calc(var(--w) * .66);margin:0 auto;position:relative;cursor:pointer;filter:drop-shadow(0 26px 40px rgba(67,42,40,.28))}
 .env-body{position:absolute;inset:0;border-radius:8px;background:linear-gradient(160deg,var(--paper),#F1E7D9);overflow:hidden}
 .env-body::before,.env-body::after{content:"";position:absolute;inset:0}
@@ -199,6 +200,8 @@ body.intro-locked{overflow:hidden;height:100vh}
 .lmark.right{right:3px;left:auto;top:50%;bottom:auto;transform:translateY(-50%) rotate(-90deg)}
 .letter-in{position:relative;z-index:1;text-align:center}
 
+/* personalized greeting */
+.letter-greeting{font-family:var(--serif);font-style:italic;font-size:clamp(1.15rem,3.6vw,1.45rem);color:var(--rose-deep);margin:.2rem 0 1.2rem}
 /* letter HEADER */
 .letter-header{padding:.6rem 0 .4rem}
 .lh-eyebrow{font-family:var(--sans);letter-spacing:.4em;text-transform:uppercase;font-size:.62rem;color:var(--rose-deep);margin:.9rem 0 .5rem}
@@ -327,6 +330,7 @@ body.intro-locked{overflow:hidden;height:100vh}
 <div id="intro" role="dialog" aria-label="Wedding invitation envelope">
   <div class="intro-inner">
     <p class="intro-kicker" data-i18n="intro.kicker">You are cordially invited</p>
+    <p class="intro-to script" id="introTo" hidden></p>
     <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="Open the invitation">
       <div class="env-body"><div class="env-letter"><span class="amp foil">S &amp; A</span><small>Saad &amp; Arwa</small></div></div>
       <div class="env-front" aria-hidden="true"><svg viewBox="0 0 300 200" preserveAspectRatio="none"><path d="M0,200 L0,60 L150,150 L300,60 L300,200 Z" fill="#F4EADB"/><path d="M0,200 L150,110 L300,200 Z" fill="#EFE2CF"/></svg></div>
@@ -366,6 +370,7 @@ body.intro-locked{overflow:hidden;height:100vh}
       <span class="lmark left" aria-hidden="true"></span><span class="lmark right" aria-hidden="true"></span>
 
       <div class="letter-in">
+        <p class="letter-greeting" id="letterGreeting" hidden></p>
         <!-- HEADER -->
         <header class="letter-header">
           <div class="crest" id="letterCrest" aria-hidden="true"></div>
@@ -585,6 +590,7 @@ const STR = {
 const AR_DIGITS="٠١٢٣٤٥٦٧٨٩";
 const toArabicDigits=s=>String(s).replace(/[0-9]/g,d=>AR_DIGITS[+d]);
 let LANG=CONFIG.defaultLang==="ar"?"ar":"en";
+let GUEST="";   // personalized recipient name from ?to= (set at boot)
 const t=k=>(STR[LANG][k]??STR.en[k]??k);
 
 /* ============================================================= *
@@ -644,6 +650,10 @@ function applyLang(lang){
   document.getElementById('langLabel').textContent=t('lang.toggle');
   document.getElementById('mlabel').textContent=musicBtn.classList.contains('playing')?t('music.on'):t('music.off');
   const note=document.getElementById('formNote');if(note&&!CONFIG.formspreeId)note.textContent=t('rsvp.demo');
+  if(GUEST){
+    const to=document.getElementById('introTo');if(to)to.textContent=(LANG==='ar'?'إلى ':'For ')+GUEST;
+    const gr=document.getElementById('letterGreeting');if(gr)gr.textContent=(LANG==='ar'?('عزيزنا '+GUEST+'،'):('Dearest '+GUEST+','));
+  }
   renderStory();refreshCountdown();
 }
 document.getElementById('lang').addEventListener('click',()=>applyLang(LANG==='ar'?'en':'ar'));
@@ -780,6 +790,12 @@ function startPetals(){if(matchMedia('(prefers-reduced-motion: reduce)').matches
 (function fireflies(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const layer=document.getElementById('fireflies');if(!layer)return;for(let i=0;i<18;i++){const f=document.createElement('div');f.className='fly';f.style.left=(Math.random()*100)+'%';f.style.top=(Math.random()*100)+'%';f.style.setProperty('--fx',(Math.random()*60-30)+'px');f.style.setProperty('--fy',(-20-Math.random()*40)+'px');f.style.setProperty('--fd',(7+Math.random()*8)+'s');f.style.animationDelay=(Math.random()*8)+'s';layer.appendChild(f);}})();
 
 /* boot */
+(function readParams(){
+  const p=new URLSearchParams(location.search);
+  GUEST=(p.get('to')||'').trim().slice(0,60);
+  const lp=p.get('lang'); if(lp==='ar'||lp==='en') LANG=lp;
+  if(GUEST){const a=document.getElementById('introTo'),b=document.getElementById('letterGreeting');if(a)a.hidden=false;if(b)b.hidden=false;}
+})();
 applyLang(LANG);
 MusicEngine.preload();
 requestAnimationFrame(observeReveals);
